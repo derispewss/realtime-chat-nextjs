@@ -1,0 +1,46 @@
+{
+    "meta": {
+        "title": "Realtime Chat",
+        "description": "Halaman landing untuk platform chat realtime yang cepat, aman, dan kolaboratif."
+    },
+    "home": {
+        "navFeatures": "Fitur",
+        "navTestimonials": "Testimoni",
+        "navFree": "100% Gratis",
+        "badge": "Pesan Tim Realtime",
+        "headline": "Ubah percakapan tim dari berantakan menjadi terstruktur.",
+        "description": "Buat room, balas instan, dan simpan semua keputusan agar mudah dicari dalam satu workspace chat modern.",
+        "primaryCta": "Masuk Chat",
+        "secondaryCta": "Lihat Fitur",
+        "tertiaryCta": "Lihat Preview",
+        "statRoomsLabel": "Setup Workspace",
+        "statRoomsValue": "Instan",
+        "statLatencyLabel": "Alur Pesan",
+        "statLatencyValue": "Realtime",
+        "statSecurityLabel": "Privasi Data",
+        "statSecurityValue": "Privat secara default",
+        "socialProof": "Dipercaya tim produk, support, dan engineering di lebih dari 20 negara.",
+        "trustTitle": "Dibangun untuk tim yang bergerak cepat",
+        "trustOne": "SLA uptime 99.95%",
+        "trustTwo": "Hak akses role dan channel yang granular",
+        "trustThree": "Log pesan siap audit dan bisa diekspor",
+        "featureTitle": "Semua yang dibutuhkan tim realtime",
+        "featureOneTitle": "Channel berutas secara langsung",
+        "featureOneDesc": "Jaga diskusi tetap rapi dengan channel dan balasan yang selalu update secara realtime.",
+        "featureTwoTitle": "Status online dan mengetik",
+        "featureTwoDesc": "Ketahui siapa yang sedang online, mengetik, dan area fokus tim saat ini.",
+        "featureThreeTitle": "Pencarian cepat dan histori",
+        "featureThreeDesc": "Temukan keputusan, tautan, dan file lama hanya dalam hitungan detik.",
+        "testimonialTitle": "Kata tim pengguna",
+        "testimonialQuote": "Waktu respons tim kami turun 37% dalam dua minggu setelah semua komunikasi operasional dipindahkan ke platform ini.",
+        "testimonialAuthor": "Dina Walker, Ops Lead di Orbit Labs",
+        "finalCtaTitle": "Dibangun untuk gratis, dibangun untuk bermanfaat.",
+        "finalCtaDesc": "Platform ini 100% gratis untuk semua tim. Buat workspace, undang anggota, dan kolaborasi realtime tanpa paywall.",
+        "finalCtaButton": "Buka Workspace Gratis",
+        "freeForever": "Tanpa batas trial. Tanpa paket tersembunyi. Tanpa setup billing.",
+        "switchLabel": "Bahasa"
+    },
+    "chat": {
+        "breadcrumbTitle": "Chat Realtime"
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "meta": {
+        "title": "Realtime Chat",
+        "description": "Landing page for a fast, secure, and collaborative realtime chat platform."
+    },
+    "home": {
+        "navFeatures": "Features",
+        "navTestimonials": "Testimonials",
+        "navFree": "100% Free",
+        "badge": "Realtime Team Messaging",
+        "headline": "Move your team conversations from chaos to clarity.",
+        "description": "Create rooms, reply instantly, and keep every decision searchable in one modern chat workspace.",
+        "primaryCta": "Open Chat",
+        "secondaryCta": "See Features",
+        "tertiaryCta": "View Live Preview",
+        "statRoomsLabel": "Workspace Setup",
+        "statRoomsValue": "Instant",
+        "statLatencyLabel": "Message Flow",
+        "statLatencyValue": "Realtime",
+        "statSecurityLabel": "Data Privacy",
+        "statSecurityValue": "Private by default",
+        "socialProof": "Trusted by product, support, and engineering teams across 20+ countries.",
+        "trustTitle": "Built for teams that move fast",
+        "trustOne": "99.95% uptime SLA",
+        "trustTwo": "Granular role and channel permissions",
+        "trustThree": "Exportable audit-ready message logs",
+        "featureTitle": "Everything your realtime team needs",
+        "featureOneTitle": "Live threaded channels",
+        "featureOneDesc": "Keep discussions structured with channels and replies that update in real time.",
+        "featureTwoTitle": "Presence and typing status",
+        "featureTwoDesc": "Know who is online, who is typing, and where your team is focused right now.",
+        "featureThreeTitle": "Fast search and history",
+        "featureThreeDesc": "Find past decisions, links, and files in seconds with reliable message indexing.",
+        "testimonialTitle": "What teams say",
+        "testimonialQuote": "Our response time dropped by 37% in two weeks after we moved all operational chat into this platform.",
+        "testimonialAuthor": "Dina Walker, Ops Lead at Orbit Labs",
+        "finalCtaTitle": "Built to be free, built to be useful.",
+        "finalCtaDesc": "This platform is 100% free for all teams. Create your workspace, invite members, and collaborate in real time without paywalls.",
+        "finalCtaButton": "Open Free Workspace",
+        "freeForever": "No trial limits. No hidden plans. No billing setup.",
+        "switchLabel": "Language"
+    },
+    "chat": {
+        "breadcrumbTitle": "Realtime Chat"
+    }
+}
