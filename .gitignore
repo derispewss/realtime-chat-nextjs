@@ -41,7 +41,12 @@ yarn-error.log*
 next-env.d.ts
 
 # Agents
-.vscode/
 .agents/
 .agent/
 supabase/
+
+# Settings
+/.vscode
+
+AGENTS.md
+CLAUDE.md
