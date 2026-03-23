@@ -6,12 +6,7 @@ import { db } from "@/db";
 import { profiles } from "@/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-
-interface IUpdateProfileInput {
-    lang: string;
-    username: string;
-    avatarUrl: string | null;
-}
+import type { IUpdateProfileInput, IUpdateProfilePasswordInput } from "@/types/profile";
 
 export const updateProfile = async (input: IUpdateProfileInput) => {
     const user = await requireAuth(input.lang);
@@ -50,12 +45,6 @@ export const updateProfile = async (input: IUpdateProfileInput) => {
 
     return { success: true };
 };
-
-interface IUpdateProfilePasswordInput {
-    lang: string;
-    password: string;
-    confirmPassword: string;
-}
 
 export const updateProfilePassword = async (input: IUpdateProfilePasswordInput) => {
     await requireAuth(input.lang);

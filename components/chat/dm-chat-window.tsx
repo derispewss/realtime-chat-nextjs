@@ -1,28 +1,15 @@
 "use client";
 
-import { deleteDM, editDM, sendDM } from "@/app/actions/direct-messages";
+import { deleteDMForBoth, deleteDMForMe, editDM, sendDM } from "@/app/actions/direct-messages";
 import { MessageInput } from "@/components/chat/message-input";
 import { MessageList } from "@/components/chat/message-list";
+import { DMInfoSheet } from "@/components/chat/dm-info-sheet";
 import { useRealtimeDMs } from "@/hooks/use-realtime-dms";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import debounce from "lodash.debounce";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import type { IDMChatWindowProps, IEditingMessage } from "@/types/chat";
 
-interface IMessage {
-    id: string;
-    content: string;
-    createdAt: Date;
-    deliveredAt: Date | null;
-    readAt: Date | null;
-    sender: { id: string; username: string; avatarUrl: string | null };
-}
-
-interface IDMChatWindowProps {
-    currentUserId: string;
-    currentUsername: string;
-    partnerId: string;
-    initialMessages: IMessage[];
-}
 
 export const DMChatWindow = ({
     currentUserId,
@@ -30,6 +17,8 @@ export const DMChatWindow = ({
     partnerId,
     initialMessages,
 }: IDMChatWindowProps) => {
+    const [editingMessage, setEditingMessage] = useState<IEditingMessage | null>(null);
+    const [dmInfoMessageId, setDmInfoMessageId] = useState<string | null>(null);
     const SOUND_KEY = "chat.notifications.sound";
     const DESKTOP_KEY = "chat.notifications.desktop";
 
@@ -92,6 +81,15 @@ export const DMChatWindow = ({
     const { typingUsers, sendTypingEvent } = useTypingIndicator(dmRoomId, currentUserId, currentUsername);
 
     const handleSend = async (content: string) => {
+        if (editingMessage) {
+            const result = await editDM(editingMessage.id, content);
+            if (result.message) {
+                updateMessageContent(result.message.id, result.message.content);
+            }
+            setEditingMessage(null);
+            return;
+        }
+
         const result = await sendDM(partnerId, content);
         if (result.message) {
             appendMessage({
@@ -109,18 +107,22 @@ export const DMChatWindow = ({
         }
     };
 
-    const handleEdit = async (messageId: string, content: string) => {
-        const result = await editDM(messageId, content);
-        if (result.message) {
-            updateMessageContent(result.message.id, result.message.content);
-        }
+    const handleStartEdit = (messageId: string, content: string) => {
+        setEditingMessage({ id: messageId, content });
     };
 
-    const handleDelete = async (messageId: string) => {
-        const result = await deleteDM(messageId);
-        if (result.success) {
-            removeMessage(messageId);
-        }
+    const handleCancelEdit = () => {
+        setEditingMessage(null);
+    };
+
+    const handleDeleteForBoth = async (messageId: string) => {
+        const result = await deleteDMForBoth(messageId);
+        if (result.success) removeMessage(messageId);
+    };
+
+    const handleDeleteForMe = async (messageId: string) => {
+        await deleteDMForMe(messageId);
+        removeMessage(messageId); // hide locally
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,10 +139,22 @@ export const DMChatWindow = ({
                 messages={messages}
                 currentUserId={currentUserId}
                 typingUsers={typingUsers}
-                onEditMessage={handleEdit}
-                onDeleteMessage={handleDelete}
+                editingMessageId={editingMessage?.id}
+                onStartEdit={handleStartEdit}
+                onDeleteForMe={handleDeleteForMe}
+                onDeleteForBoth={handleDeleteForBoth}
+                onDMInfo={(id) => setDmInfoMessageId(id)}
             />
-            <MessageInput onSend={handleSend} onType={handleType} />
+            <MessageInput
+                onSend={handleSend}
+                onType={handleType}
+                editingMessage={editingMessage}
+                onCancelEdit={handleCancelEdit}
+            />
+            <DMInfoSheet
+                messageId={dmInfoMessageId}
+                onClose={() => setDmInfoMessageId(null)}
+            />
         </div>
     );
 };

@@ -16,12 +16,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { loginSchema, ILoginForm } from "@/types/auth";
+import type { ILoginFormProps } from "@/types/auth";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface ILoginFormProps {
-    lang: string;
-}
 
 export const LoginForm = ({ lang }: ILoginFormProps) => {
     const [error, setError] = useState<string | null>(null);
