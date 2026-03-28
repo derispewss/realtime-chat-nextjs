@@ -22,7 +22,7 @@ export const MessageInput = ({
     // When edit mode activates, populate the textarea and focus
     useEffect(() => {
         if (editingMessage) {
-            setValue(editingMessage.content);
+            void Promise.resolve().then(() => setValue(editingMessage.content));
             setTimeout(() => {
                 const el = ref.current;
                 if (!el) return;

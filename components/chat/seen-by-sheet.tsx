@@ -8,7 +8,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+
 import { Eye } from "lucide-react";
 import { getMessageReaders } from "@/app/actions/groups";
 import type { IMessageReader } from "@/types/chat";
@@ -24,11 +24,11 @@ export const SeenBySheet = ({ messageId, onClose }: ISeenBySheetProps) => {
 
     useEffect(() => {
         if (!messageId) {
-            setReaders([]);
+            void Promise.resolve().then(() => setReaders([]));
             return;
         }
 
-        setLoading(true);
+        void Promise.resolve().then(() => setLoading(true));
         getMessageReaders(messageId)
             .then((res) => {
                 if (res.readers) {

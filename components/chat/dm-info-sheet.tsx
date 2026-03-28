@@ -29,8 +29,11 @@ export const DMInfoSheet = ({ messageId, onClose }: IDMInfoSheetProps) => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!messageId) { setInfo(null); return; }
-        setLoading(true);
+        if (!messageId) {
+            void Promise.resolve().then(() => setInfo(null));
+            return;
+        }
+        void Promise.resolve().then(() => setLoading(true));
         getDMInfo(messageId)
             .then((res) => { if (res.info) setInfo(res.info as IDMInfo); })
             .finally(() => setLoading(false));

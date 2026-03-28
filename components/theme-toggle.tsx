@@ -5,11 +5,11 @@ import { MoonIcon, SunIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const ThemeToggle = () => {
-    const { theme, setTheme, resolvedTheme } = useTheme();
+    const { setTheme, resolvedTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
     // Avoid hydration mismatch — render only after mount when theme is known
-    useEffect(() => { setMounted(true); }, []);
+    useEffect(() => { void Promise.resolve().then(() => setMounted(true)); }, []);
 
     const toggle = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
 

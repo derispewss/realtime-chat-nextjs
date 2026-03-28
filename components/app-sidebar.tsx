@@ -48,7 +48,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
-import type { IProfile, IRoom } from "@/db/schema"
+
 import type { IDMPartnerWithLastMessage } from "@/db/queries/direct-messages"
 import type { TSidebarSection, INavItem, IAppSidebarProps } from "@/types/sidebar"
 
