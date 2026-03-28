@@ -26,13 +26,18 @@ import {
   HashIcon,
   LogOutIcon,
   MessageCircle,
+  MessageSquareDashed,
   MessageSquareIcon,
   MessagesSquareIcon,
   PanelLeftIcon,
+  PlusIcon,
   Trash2,
   UserIcon,
   UsersIcon,
 } from "lucide-react"
+import { CreateGroupDialog } from "@/components/chat/create-group-dialog"
+import { StartDMDialog } from "@/components/chat/start-dm-dialog"
+import { Button } from "@/components/ui/button"
 
 import { leaveGroup } from "@/app/actions/groups"
 import { clearDMConversation } from "@/app/actions/direct-messages"
@@ -261,17 +266,49 @@ export const AppSidebar = ({
         <SidebarHeader className="gap-3.5 border-b p-4">
           <div className="flex w-full items-center justify-between">
             <div className="text-base font-medium text-foreground">{activeItem.title}</div>
-            <SidebarMenuButton
-              tooltip={{
-                children: open ? "Collapse sidebar" : "Expand sidebar",
-                hidden: false,
-              }}
-              onClick={toggleSidebar}
-              aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-              className="h-8 w-8 shrink-0 justify-center p-0"
-            >
-              <PanelLeftIcon className="h-4 w-4" />
-            </SidebarMenuButton>
+            <div className="flex items-center gap-1">
+              {activeItem.key === "groups" && (
+                <CreateGroupDialog
+                  lang={lang}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Create group"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+              {activeItem.key === "dms" && (
+                <StartDMDialog
+                  lang={lang}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="New message"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+              <SidebarMenuButton
+                tooltip={{
+                  children: open ? "Collapse sidebar" : "Expand sidebar",
+                  hidden: false,
+                }}
+                onClick={toggleSidebar}
+                aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+                className="h-7 w-7 shrink-0 justify-center p-0"
+              >
+                <PanelLeftIcon className="h-4 w-4" />
+              </SidebarMenuButton>
+            </div>
           </div>
           <SidebarInput
             placeholder={activeItem.key === "groups" ? "Search groups..." : "Search users..."}
@@ -283,9 +320,32 @@ export const AppSidebar = ({
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
               {activeItem.key === "groups" && filteredGroups.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">
-                  {groups.length === 0 ? "No groups yet" : "No groups match your search"}
-                </p>
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                    <UsersIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {groups.length === 0 ? "No groups yet" : "No results"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {groups.length === 0
+                        ? "Tap + to create your first group"
+                        : "Try a different search"}
+                    </p>
+                  </div>
+                  {groups.length === 0 && (
+                    <CreateGroupDialog
+                      lang={lang}
+                      trigger={
+                        <Button size="sm" variant="outline" className="mt-1 gap-1.5">
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          Create group
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
               )}
 
               {activeItem.key === "groups" &&
@@ -362,9 +422,32 @@ export const AppSidebar = ({
                 })}
 
               {activeItem.key === "dms" && filteredDMPartners.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">
-                  {dmPartners.length === 0 ? "No conversations yet" : "No users match your search"}
-                </p>
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                    <MessageSquareDashed className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {dmPartners.length === 0 ? "No conversations" : "No results"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {dmPartners.length === 0
+                        ? "Tap + to start a new chat"
+                        : "Try a different search"}
+                    </p>
+                  </div>
+                  {dmPartners.length === 0 && (
+                    <StartDMDialog
+                      lang={lang}
+                      trigger={
+                        <Button size="sm" variant="outline" className="mt-1 gap-1.5">
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          New message
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
               )}
 
               {activeItem.key === "dms" &&

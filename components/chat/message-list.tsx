@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { AnimatePresence } from "framer-motion";
@@ -11,6 +10,7 @@ export const MessageList = ({
     messages,
     currentUserId,
     typingUsers = [],
+    variant = "group",
     editingMessageId,
     onStartEdit,
     onDeleteForMe,
@@ -38,8 +38,8 @@ export const MessageList = ({
     }
 
     return (
-        <ScrollArea className="flex-1 px-4 py-3">
-            <div className="flex flex-col gap-3">
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="flex flex-col gap-2.5">
                 <AnimatePresence initial={false}>
                     {messages.map((msg) => (
                         <MessageBubble
@@ -53,6 +53,7 @@ export const MessageList = ({
                             createdAt={msg.createdAt}
                             deliveredAt={msg.deliveredAt}
                             readAt={msg.readAt}
+                            variant={variant}
                             isBeingEdited={editingMessageId === msg.id}
                             onStartEdit={onStartEdit}
                             onDeleteForMe={onDeleteForMe}
@@ -69,6 +70,6 @@ export const MessageList = ({
                 </AnimatePresence>
                 <div ref={bottomRef} className="h-1" />
             </div>
-        </ScrollArea>
+        </div>
     );
 };

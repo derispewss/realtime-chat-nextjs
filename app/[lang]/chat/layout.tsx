@@ -7,6 +7,7 @@ import { getRoomsByUser } from "@/db/queries/rooms";
 import { getDMPartnersWithLastMessage } from "@/db/queries/direct-messages";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { E2EInitializer } from "@/components/chat/e2e-initializer";
 
 export default async function ChatLayout(props: LayoutProps<"/[lang]/chat">) {
     const { children } = props;
@@ -53,6 +54,7 @@ export default async function ChatLayout(props: LayoutProps<"/[lang]/chat">) {
                 "--sidebar-width": "350px",
             } as React.CSSProperties}
         >
+            <E2EInitializer currentUserId={user.id} />
             <AppSidebar
                 lang={lang}
                 groups={groups!}

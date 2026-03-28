@@ -25,6 +25,8 @@ export interface IDMMessage {
     deliveredAt: Date | null;
     readAt: Date | null;
     sender: ISender;
+    iv?: string | null;
+    isEncrypted?: string;
 }
 
 // ---- Room / Group ----
@@ -99,6 +101,8 @@ export interface IMessageBubbleProps {
     createdAt: Date;
     deliveredAt?: Date | null;
     readAt?: Date | null;
+    /** "group" shows avatar + name; "dm" shows pure bubble only */
+    variant?: "group" | "dm";
     isBeingEdited?: boolean;
     // Group actions
     onStartEdit?: (messageId: string, content: string) => void;
@@ -116,6 +120,8 @@ export interface IMessageListProps {
     messages: IMessage[];
     currentUserId: string;
     typingUsers?: string[];
+    /** "group" shows avatar + name; "dm" shows pure bubble only. Default: "group" */
+    variant?: "group" | "dm";
     editingMessageId?: string | null;
     onStartEdit?: (messageId: string, content: string) => void;
     // Group delete modes

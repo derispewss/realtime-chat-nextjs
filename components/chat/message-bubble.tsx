@@ -1,15 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuSeparator,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -17,21 +10,46 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     CheckCheckIcon,
     CheckIcon,
-    EllipsisVertical,
-    Eye,
-    Info,
-    MessageCircle,
-    Pencil,
-    Trash2,
-    UserMinus,
-    UserX,
+    ChevronDownIcon,
+    EyeIcon,
+    InfoIcon,
+    MessageCircleIcon,
+    PencilIcon,
+    Trash2Icon,
+    UserXIcon,
 } from "lucide-react";
-import type { IMessageBubbleProps } from "@/types/chat";
+
+interface IMessageBubbleProps {
+    id: string;
+    content: string;
+    senderId: string;
+    senderUsername: string;
+    senderAvatarUrl?: string | null;
+    isOwn: boolean;
+    createdAt: Date;
+    deliveredAt?: Date | null;
+    readAt?: Date | null;
+    /** "group" shows avatar + name; "dm" hides both for pure-bubble layout */
+    variant?: "group" | "dm";
+    // Inline edit/delete (handled inside bubble)
+    onEditMessage?: (messageId: string, content: string) => Promise<void>;
+    onDeleteMessage?: (messageId: string) => Promise<void>;
+    // Passed through from parent — handled externally
+    isBeingEdited?: boolean;
+    onStartEdit?: (messageId: string, content: string) => void;
+    onDeleteForMe?: (messageId: string) => Promise<void>;
+    onDeleteForEveryone?: (messageId: string) => Promise<void>;
+    onViewSeen?: (messageId: string) => void;
+    onDMInfo?: (messageId: string) => void;
+    onDeleteForBoth?: (messageId: string) => Promise<void>;
+    onChatUser?: (userId: string) => void;
+}
 
 export const MessageBubble = ({
     id,
@@ -43,7 +61,10 @@ export const MessageBubble = ({
     createdAt,
     deliveredAt,
     readAt,
+    variant = "group",
     isBeingEdited,
+    onEditMessage,
+    onDeleteMessage,
     onStartEdit,
     onDeleteForMe,
     onDeleteForEveryone,
@@ -52,188 +73,340 @@ export const MessageBubble = ({
     onDeleteForBoth,
     onChatUser,
 }: IMessageBubbleProps) => {
-    const [deleting, setDeleting] = useState(false);
+    const isDM = variant === "dm";
+    const [isEditing, setIsEditing] = useState(false);
+    const [draft, setDraft] = useState(content);
+    const [isSaving, setIsSaving] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
     const initials = senderUsername.slice(0, 2).toUpperCase();
     const time = new Intl.DateTimeFormat("en", {
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
     }).format(new Date(createdAt));
 
-    const showAvatar = !isOwn;
-    const canChatUser = !isOwn && Boolean(onChatUser);
+    // Sync draft when content changes externally
+    useEffect(() => {
+        if (!isEditing) setDraft(content);
+    }, [content, isEditing]);
 
-    // Exactly one mode: group xor dm
-    const isGroupMode = Boolean(onDeleteForEveryone || onViewSeen) && !Boolean(onDeleteForBoth || onDMInfo);
-    const isDMMode = Boolean(onDMInfo || onDeleteForBoth);
+    // Auto-focus textarea on edit
+    useEffect(() => {
+        if (isEditing) textareaRef.current?.focus();
+    }, [isEditing]);
 
-    const runDeleting = async (fn: () => Promise<void>) => {
-        setDeleting(true);
-        try { await fn(); } finally { setDeleting(false); }
-    };
+    // ── Capabilities ──────────────────────────────────────────────
+    const inlineEdit = Boolean(onEditMessage);
+    const externalEdit = Boolean(onStartEdit);
+    const canEdit = isOwn && (inlineEdit || externalEdit);
 
-    // Inner component — same structure for both right-click and ⋮ menus
-    const MenuItems = ({ variant }: { variant: "context" | "dropdown" }) => {
-        const Item = variant === "context" ? ContextMenuItem : DropdownMenuItem;
-        const Sep = variant === "context" ? ContextMenuSeparator : DropdownMenuSeparator;
-        return (
-            <>
-                {isOwn && onStartEdit && (
-                    <Item onSelect={() => onStartEdit(id, content)}>
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                    </Item>
-                )}
-
-                {canChatUser && (
-                    <Item onSelect={() => onChatUser?.(senderId)}>
-                        <MessageCircle className="h-4 w-4" />
-                        Chat {senderUsername}
-                    </Item>
-                )}
-
-                {isGroupMode && isOwn && onViewSeen && (
-                    <Item onSelect={() => onViewSeen(id)}>
-                        <Eye className="h-4 w-4" />
-                        Seen by
-                    </Item>
-                )}
-
-                {isDMMode && onDMInfo && (
-                    <Item onSelect={() => onDMInfo(id)}>
-                        <Info className="h-4 w-4" />
-                        Info
-                    </Item>
-                )}
-
-                <Sep />
-
-                {/* Delete for me — exactly ONE entry, shared for both group and DM */}
-                {onDeleteForMe && (
-                    <Item
-                        onSelect={() => runDeleting(() => onDeleteForMe(id))}
-                        className="text-gray-600"
-                    >
-                        <UserX className="h-4 w-4" />
-                        Delete for me
-                    </Item>
-                )}
-
-                {isGroupMode && isOwn && onDeleteForEveryone && (
-                    <Item
-                        onSelect={() => runDeleting(() => onDeleteForEveryone(id))}
-                        className="text-destructive focus:text-destructive"
-                    >
-                        <Trash2 className="h-4 w-4" />
-                        Delete for everyone
-                    </Item>
-                )}
-
-                {isDMMode && isOwn && onDeleteForBoth && (
-                    <Item
-                        onSelect={() => runDeleting(() => onDeleteForBoth(id))}
-                        className="text-destructive focus:text-destructive"
-                    >
-                        <UserMinus className="h-4 w-4" />
-                        Delete for {senderUsername.length > 12 ? "both" : `${senderUsername} & me`}
-                    </Item>
-                )}
-            </>
-        );
-    };
-
-    const hasMenu =
-        Boolean(onStartEdit) ||
+    const hasDeleteOptions =
         Boolean(onDeleteForMe) ||
         Boolean(onDeleteForEveryone) ||
-        Boolean(onViewSeen) ||
-        Boolean(onDMInfo) ||
         Boolean(onDeleteForBoth) ||
-        canChatUser;
+        Boolean(onDeleteMessage);
+
+    const isGroupMode = Boolean(onDeleteForEveryone || onViewSeen);
+    const isDMMode = Boolean(onDMInfo || onDeleteForBoth);
+
+    const hasMenu =
+        canEdit ||
+        hasDeleteOptions ||
+        Boolean(onChatUser) ||
+        Boolean(onViewSeen) ||
+        Boolean(onDMInfo);
+
+    // ── Handlers ─────────────────────────────────────────────────
+    const handleSaveEdit = async () => {
+        const next = draft.trim();
+        if (!next || next === content) {
+            setIsEditing(false);
+            setDraft(content);
+            return;
+        }
+        setIsSaving(true);
+        try {
+            if (onEditMessage) await onEditMessage(id, next);
+            setIsEditing(false);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSaveEdit();
+        }
+        if (e.key === "Escape") {
+            setIsEditing(false);
+            setDraft(content);
+        }
+    };
+
+    const handleStartEdit = () => {
+        if (inlineEdit) setIsEditing(true);
+        else if (onStartEdit) onStartEdit(id, content);
+    };
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            initial={{ opacity: 0, y: 10, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
             className={cn(
-                "group/msg flex items-end gap-2.5",
-                isOwn ? "flex-row-reverse" : "flex-row",
-                deleting && "opacity-40 pointer-events-none",
+                "group/msg flex w-full items-end gap-2",
+                isOwn && "flex-row-reverse",
             )}
         >
-            {/* Avatar */}
-            {showAvatar ? (
-                <Avatar className="h-8 w-8 shrink-0 border border-gray-200 shadow-sm">
-                    {senderAvatarUrl && <AvatarImage src={senderAvatarUrl} />}
-                    <AvatarFallback className="bg-gray-100 text-[11px] font-semibold text-gray-600">
-                        {initials}
-                    </AvatarFallback>
-                </Avatar>
-            ) : null}
+            {/* Avatar — group mode only */}
+            {!isOwn && !isDM && (
+                <button
+                    type="button"
+                    onClick={() => onChatUser?.(senderId)}
+                    className={cn(
+                        "mb-0.5 shrink-0 rounded-full outline-none transition-opacity",
+                        onChatUser
+                            ? "cursor-pointer hover:opacity-80"
+                            : "pointer-events-none cursor-default",
+                    )}
+                    aria-label={onChatUser ? `Start chat with ${senderUsername}` : undefined}
+                >
+                    <Avatar className="h-7 w-7 shadow-sm">
+                        {senderAvatarUrl && <AvatarImage src={senderAvatarUrl} />}
+                        <AvatarFallback className="text-[10px] font-semibold">
+                            {initials}
+                        </AvatarFallback>
+                    </Avatar>
+                </button>
+            )}
 
-            {/* Bubble */}
-            <div className={cn("flex max-w-[75%] flex-col gap-0.5", isOwn && "items-end")}>
-                {!isOwn && (
-                    <span className="mb-0.5 ml-1 text-[11px] font-semibold tracking-wide text-gray-500">
+            {/* Bubble column */}
+            <div
+                className={cn(
+                    "flex min-w-0 max-w-[78%] flex-col gap-0.5 sm:max-w-[68%]",
+                    isOwn && "items-end",
+                )}
+            >
+                {/* Sender name — group mode only */}
+                {!isOwn && !isDM && (
+                    <span className="ml-3 text-[11px] font-semibold text-muted-foreground">
                         {senderUsername}
                     </span>
                 )}
 
-                {/* Right-click context menu wraps the bubble */}
-                <ContextMenu>
-                    <ContextMenuTrigger asChild>
-                        <div
+                {/* ── Bubble ── */}
+                <div
+                    className={cn(
+                        "group/bubble relative rounded-2xl px-3.5 py-2 text-sm shadow-sm",
+                        isOwn
+                            ? "rounded-br-sm bg-foreground text-background"
+                            : "rounded-bl-sm border border-border/50 bg-muted/40 text-foreground dark:bg-muted/20",
+                        isBeingEdited && "ring-2 ring-offset-1 ring-foreground/40",
+                    )}
+                >
+                    {/* ▾ Action chevron — inside bubble, top corner, on hover */}
+                    {hasMenu && !isEditing && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    type="button"
+                                    aria-label="Message actions"
+                                    className={cn(
+                                        "absolute top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full",
+                                        "opacity-0 transition-opacity group-hover/bubble:opacity-100",
+                                        // fade from bubble bg to transparent — WhatsApp style
+                                        isOwn
+                                            ? "right-1 bg-foreground/80 text-background/70 hover:text-background"
+                                            : "right-1 bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground",
+                                    )}
+                                >
+                                    <ChevronDownIcon className="h-3 w-3" />
+                                </button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent
+                                align="end"
+                                side="bottom"
+                                className="w-52"
+                            >
+                                {canEdit && (
+                                    <DropdownMenuItem onSelect={handleStartEdit}>
+                                        <PencilIcon className="h-4 w-4" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                )}
+
+                                {isGroupMode && isOwn && onViewSeen && (
+                                    <DropdownMenuItem onSelect={() => onViewSeen(id)}>
+                                        <EyeIcon className="h-4 w-4" />
+                                        Seen by
+                                    </DropdownMenuItem>
+                                )}
+
+                                {isDMMode && onDMInfo && (
+                                    <DropdownMenuItem onSelect={() => onDMInfo(id)}>
+                                        <InfoIcon className="h-4 w-4" />
+                                        Info
+                                    </DropdownMenuItem>
+                                )}
+
+                                {!isOwn && onChatUser && (
+                                    <DropdownMenuItem onSelect={() => onChatUser(senderId)}>
+                                        <MessageCircleIcon className="h-4 w-4" />
+                                        Message {senderUsername}
+                                    </DropdownMenuItem>
+                                )}
+
+                                {hasDeleteOptions && <DropdownMenuSeparator />}
+
+                                {onDeleteForMe && (
+                                    <DropdownMenuItem
+                                        onSelect={() => onDeleteForMe(id)}
+                                        className="text-muted-foreground focus:text-muted-foreground"
+                                    >
+                                        <UserXIcon className="h-4 w-4" />
+                                        Delete for me
+                                    </DropdownMenuItem>
+                                )}
+
+                                {isGroupMode && isOwn && onDeleteForEveryone && (
+                                    <DropdownMenuItem
+                                        onSelect={() => onDeleteForEveryone(id)}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2Icon className="h-4 w-4" />
+                                        Delete for everyone
+                                    </DropdownMenuItem>
+                                )}
+
+                                {isDMMode && isOwn && onDeleteForBoth && (
+                                    <DropdownMenuItem
+                                        onSelect={() => onDeleteForBoth(id)}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2Icon className="h-4 w-4" />
+                                        Delete for{" "}
+                                        {senderUsername.length > 12
+                                            ? "both"
+                                            : `${senderUsername} & me`}
+                                    </DropdownMenuItem>
+                                )}
+
+                                {onDeleteMessage && isOwn && (
+                                    <DropdownMenuItem
+                                        onSelect={() => onDeleteMessage(id)}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2Icon className="h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+
+                    {/* ── Content ── */}
+                    <AnimatePresence mode="wait" initial={false}>
+                        {isEditing ? (
+                            <motion.div
+                                key="editing"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col gap-2 pt-3"
+                            >
+                                <Textarea
+                                    ref={textareaRef}
+                                    value={draft}
+                                    onChange={(e) => setDraft(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    rows={2}
+                                    className={cn(
+                                        "min-w-[200px] resize-none border-0 bg-transparent p-0 text-sm shadow-none outline-none focus-visible:ring-0",
+                                        isOwn
+                                            ? "text-background placeholder:text-background/50"
+                                            : "text-foreground",
+                                    )}
+                                />
+                                <div className="flex items-center justify-end gap-2 pb-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setDraft(content);
+                                        }}
+                                        className={cn(
+                                            "text-[11px] underline underline-offset-2 opacity-60 hover:opacity-100",
+                                            isOwn ? "text-background" : "text-foreground",
+                                        )}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <Button
+                                        size="sm"
+                                        onClick={handleSaveEdit}
+                                        disabled={isSaving}
+                                        className={cn(
+                                            "h-6 px-2.5 text-[11px]",
+                                            isOwn
+                                                ? "bg-background text-foreground hover:bg-background/90"
+                                                : "",
+                                        )}
+                                    >
+                                        {isSaving ? "Saving…" : "Save"}
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <motion.p
+                                key="reading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="whitespace-pre-wrap break-words leading-relaxed"
+                            >
+                                {content}
+                                {/*
+                                 * Phantom spacer — same visual width as the timestamp block.
+                                 * This pushes the last text line's wrap point so the
+                                 * absolutely-positioned timestamp never overlaps words.
+                                 */}
+                                <span
+                                    aria-hidden
+                                    className={cn(
+                                        "pointer-events-none ml-1.5 inline-block align-bottom text-[10px] leading-none opacity-0 select-none",
+                                    )}
+                                >
+                                    {time}
+                                    {isOwn && " ✓✓"}
+                                </span>
+                            </motion.p>
+                        )}
+                    </AnimatePresence>
+
+                    {/* ── Timestamp + read receipts ── */}
+                    {!isEditing && (
+                        <span
                             className={cn(
-                                "relative px-3.5 py-2 text-[14px] leading-relaxed transition-all duration-150 cursor-pointer select-text",
-                                isOwn
-                                    ? "rounded-2xl rounded-br-md bg-black text-white shadow-md"
-                                    : "rounded-2xl rounded-bl-md border border-gray-200 bg-gray-50 text-black shadow-sm",
-                                isBeingEdited && "ring-2 ring-gray-400 ring-offset-1",
+                                "absolute bottom-1.5 right-2.5 inline-flex items-center gap-0.5 text-[10px] leading-none",
+                                isOwn ? "text-background/60" : "text-muted-foreground",
                             )}
                         >
-                            {/* ⋮ dropdown button (fallback for mobile / discoverability) */}
-                            {hasMenu && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className={cn(
-                                                "absolute top-1 h-6 w-6 opacity-0 transition-opacity group-hover/msg:opacity-100",
-                                                isOwn
-                                                    ? "-left-8 text-gray-500 hover:text-black"
-                                                    : "-right-8 text-gray-400 hover:text-black",
-                                            )}
-                                        >
-                                            <EllipsisVertical className="h-3.5 w-3.5" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align={isOwn ? "end" : "start"} className="w-52">
-                                        <MenuItems variant="dropdown" />
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                            {time}
+                            {isOwn && !deliveredAt && (
+                                <CheckIcon className="h-3 w-3 shrink-0" />
                             )}
-
-                            {/* Content */}
-                            <div>
-                                <p className="whitespace-pre-wrap break-words pr-16">{content}</p>
-                                {/* Timestamp & read receipts */}
-                                <span className="absolute right-3 bottom-1.5 inline-flex items-center gap-1 text-[10px] leading-none text-gray-400">
-                                    <span>{time}</span>
-                                    {isOwn && !deliveredAt && <CheckIcon className="h-3 w-3" />}
-                                    {isOwn && deliveredAt && !readAt && <CheckCheckIcon className="h-3 w-3" />}
-                                    {isOwn && readAt && <CheckCheckIcon className="h-3 w-3 text-gray-300" />}
-                                </span>
-                            </div>
-                        </div>
-                    </ContextMenuTrigger>
-
-                    {hasMenu && (
-                        <ContextMenuContent className="w-52">
-                            <MenuItems variant="context" />
-                        </ContextMenuContent>
+                            {isOwn && deliveredAt && !readAt && (
+                                <CheckCheckIcon className="h-3 w-3 shrink-0" />
+                            )}
+                            {isOwn && readAt && (
+                                <CheckCheckIcon className="h-3 w-3 shrink-0 opacity-100" />
+                            )}
+                        </span>
                     )}
-                </ContextMenu>
+                </div>
             </div>
         </motion.div>
     );

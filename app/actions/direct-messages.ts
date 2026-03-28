@@ -5,7 +5,11 @@ import { directMessages, messageDeletions } from "@/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { and, eq, isNull, or } from "drizzle-orm";
 
-export const sendDM = async (receiverId: string, content: string) => {
+export const sendDM = async (
+    receiverId: string,
+    content: string,
+    opts?: { iv?: string; isEncrypted?: boolean },
+) => {
     const user = await requireAuth();
 
     const [message] = await db
@@ -14,10 +18,14 @@ export const sendDM = async (receiverId: string, content: string) => {
             senderId: user.id,
             receiverId,
             content,
+            iv: opts?.iv ?? null,
+            isEncrypted: opts?.isEncrypted ? "true" : "false",
         })
         .returning({
             id: directMessages.id,
             content: directMessages.content,
+            iv: directMessages.iv,
+            isEncrypted: directMessages.isEncrypted,
             createdAt: directMessages.createdAt,
             senderId: directMessages.senderId,
             deliveredAt: directMessages.deliveredAt,
@@ -26,6 +34,7 @@ export const sendDM = async (receiverId: string, content: string) => {
 
     return { success: true, message };
 };
+
 
 export const markDMDelivered = async (messageId: string) => {
     const user = await requireAuth();

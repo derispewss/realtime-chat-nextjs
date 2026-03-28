@@ -14,6 +14,8 @@ export const profiles = pgTable("profiles", {
     username: text("username").notNull().unique(),
     email: text("email").notNull().unique(),
     avatarUrl: text("avatar_url"),
+    /** ECDH P-256 public key (base64url) — uploaded on first login */
+    publicKey: text("public_key"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -68,7 +70,11 @@ export const directMessages = pgTable("direct_messages", {
     receiverId: uuid("receiver_id")
         .references(() => profiles.id, { onDelete: "cascade" })
         .notNull(),
-    content: text("content").notNull(),
+    content: text("content").notNull(), // either plaintext OR base64 ciphertext
+    /** AES-GCM IV (base64), null for unencrypted messages */
+    iv: text("iv"),
+    /** true = content is E2EE ciphertext; false = plaintext (legacy / fallback) */
+    isEncrypted: text("is_encrypted").default("false").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     deliveredAt: timestamp("delivered_at"),
     readAt: timestamp("read_at"),

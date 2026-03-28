@@ -1,23 +1,22 @@
 import { requireGuest } from "@/lib/auth";
 import { SignupForm } from "@/components/auth/signup-form";
+import { AuthLayout } from "@/components/auth/auth-layout";
 
 export default async function SignupPage(props: PageProps<"/[lang]/auth/signup">) {
     const { lang } = await props.params;
     await requireGuest(lang);
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-background px-4">
-            <div className="w-full max-w-sm space-y-6">
-                <div className="space-y-1 text-center">
+        <AuthLayout lang={lang} quote="Join thousands of people already chatting in real-time." quoteAuthor="RealtimeChat Team">
+            <div className="space-y-6">
+                <div className="space-y-1.5 text-center">
                     <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
                     <p className="text-sm text-muted-foreground">
                         Join and start chatting instantly
                     </p>
                 </div>
-                <div className="rounded-xl border bg-card p-6 shadow-sm">
-                    <SignupForm lang={lang} />
-                </div>
+                <SignupForm lang={lang} />
             </div>
-        </div>
+        </AuthLayout>
     );
 }
