@@ -1,9 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Hash } from "lucide-react";
+import type { IChatConversationSkeletonProps } from "@/types/chat";
 
-interface IChatConversationSkeletonProps {
-    type: "dm" | "group";
-}
 
 export const ChatConversationSkeleton = ({ type }: IChatConversationSkeletonProps) => {
     return (

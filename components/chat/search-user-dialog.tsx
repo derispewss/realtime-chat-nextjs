@@ -12,20 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { ISearchUser, ISearchUserDialogProps } from "@/types/chat";
 
-interface ISearchUser {
-    id: string;
-    username: string;
-    email: string;
-    avatarUrl: string | null;
-}
-
-interface ISearchUserDialogProps {
-    lang: string;
-    trigger: React.ReactNode;
-    mode: "dm" | "invite";
-    onInvite?: (userId: string) => Promise<void>;
-}
 
 export const SearchUserDialog = ({
     lang,

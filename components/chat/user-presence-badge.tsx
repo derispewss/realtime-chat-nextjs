@@ -2,11 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { useUserPresence } from "@/hooks/use-user-presence";
+import type { IUserPresenceBadgeProps } from "@/types/chat";
 
-interface IUserPresenceBadgeProps {
-    currentUserId: string;
-    targetUserId: string;
-}
 
 export const UserPresenceBadge = ({ currentUserId, targetUserId }: IUserPresenceBadgeProps) => {
     const { status } = useUserPresence(currentUserId, targetUserId);

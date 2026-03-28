@@ -14,6 +14,8 @@ export interface IDMPartnerWithLastMessage {
         senderId: string;
         deliveredAt: Date | null;
         readAt: Date | null;
+        iv?: string | null;
+        isEncrypted?: string;
     } | null;
 }
 
@@ -22,6 +24,8 @@ export const getDMConversation = async (userAId: string, userBId: string) => {
         .select({
             id: directMessages.id,
             content: directMessages.content,
+            iv: directMessages.iv,
+            isEncrypted: directMessages.isEncrypted,
             createdAt: directMessages.createdAt,
             deliveredAt: directMessages.deliveredAt,
             readAt: directMessages.readAt,
@@ -118,6 +122,8 @@ export const getDMPartnersWithLastMessage = async (userId: string): Promise<IDMP
                 .select({
                     id: directMessages.id,
                     content: directMessages.content,
+                    iv: directMessages.iv,
+                    isEncrypted: directMessages.isEncrypted,
                     createdAt: directMessages.createdAt,
                     senderId: directMessages.senderId,
                     deliveredAt: directMessages.deliveredAt,
@@ -158,11 +164,13 @@ export const getDMPartnersWithLastMessage = async (userId: string): Promise<IDMP
                 lastMessage: lastMessage
                     ? {
                         id: lastMessage.id,
-                        content: lastMessage.content,
+                        content: lastMessage.isEncrypted === "true" ? "🔒 Encrypted message" : lastMessage.content,
                         createdAt: lastMessage.createdAt,
                         senderId: lastMessage.senderId,
                         deliveredAt: lastMessage.deliveredAt,
                         readAt: lastMessage.readAt,
+                        iv: lastMessage.iv,
+                        isEncrypted: lastMessage.isEncrypted,
                     }
                     : null,
             } satisfies IDMPartnerWithLastMessage;

@@ -1,45 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./message-bubble";
 import { TypingIndicator } from "./typing-indicator";
 import { AnimatePresence } from "framer-motion";
-
-interface IMessage {
-    id: string;
-    content: string;
-    createdAt: Date;
-    deliveredAt?: Date | null;
-    readAt?: Date | null;
-    sender: {
-        id: string;
-        username: string;
-        avatarUrl: string | null;
-    };
-}
-
-interface IMessageListProps {
-    messages: IMessage[];
-    currentUserId: string;
-    typingUsers?: string[];
-    onEditMessage?: (messageId: string, content: string) => Promise<void>;
-    onDeleteMessage?: (messageId: string) => Promise<void>;
-    onChatUser?: (userId: string) => void;
-}
+import type { IMessageListProps } from "@/types/chat";
 
 export const MessageList = ({
     messages,
     currentUserId,
     typingUsers = [],
-    onEditMessage,
-    onDeleteMessage,
+    variant = "group",
+    editingMessageId,
+    onStartEdit,
+    onDeleteForMe,
+    onDeleteForEveryone,
+    onViewSeen,
+    onDMInfo,
+    onDeleteForBoth,
     onChatUser,
 }: IMessageListProps) => {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Delay slightly giving time for animation to render layout shift
         const timeout = setTimeout(() => {
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 50);
@@ -55,8 +38,8 @@ export const MessageList = ({
     }
 
     return (
-        <ScrollArea className="flex-1 px-4 py-4">
-            <div className="flex flex-col gap-4">
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="flex flex-col gap-2.5">
                 <AnimatePresence initial={false}>
                     {messages.map((msg) => (
                         <MessageBubble
@@ -70,8 +53,14 @@ export const MessageList = ({
                             createdAt={msg.createdAt}
                             deliveredAt={msg.deliveredAt}
                             readAt={msg.readAt}
-                            onEditMessage={onEditMessage}
-                            onDeleteMessage={onDeleteMessage}
+                            variant={variant}
+                            isBeingEdited={editingMessageId === msg.id}
+                            onStartEdit={onStartEdit}
+                            onDeleteForMe={onDeleteForMe}
+                            onDeleteForEveryone={onDeleteForEveryone}
+                            onViewSeen={onViewSeen}
+                            onDMInfo={onDMInfo}
+                            onDeleteForBoth={onDeleteForBoth}
                             onChatUser={onChatUser}
                         />
                     ))}
@@ -81,6 +70,6 @@ export const MessageList = ({
                 </AnimatePresence>
                 <div ref={bottomRef} className="h-1" />
             </div>
-        </ScrollArea>
+        </div>
     );
 };

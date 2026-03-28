@@ -3,6 +3,7 @@ import {
     uuid,
     text,
     timestamp,
+    uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -13,6 +14,8 @@ export const profiles = pgTable("profiles", {
     username: text("username").notNull().unique(),
     email: text("email").notNull().unique(),
     avatarUrl: text("avatar_url"),
+    /** ECDH P-256 public key (base64url) — uploaded on first login */
+    publicKey: text("public_key"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -67,11 +70,46 @@ export const directMessages = pgTable("direct_messages", {
     receiverId: uuid("receiver_id")
         .references(() => profiles.id, { onDelete: "cascade" })
         .notNull(),
-    content: text("content").notNull(),
+    content: text("content").notNull(), // either plaintext OR base64 ciphertext
+    /** AES-GCM IV (base64), null for unencrypted messages */
+    iv: text("iv"),
+    /** true = content is E2EE ciphertext; false = plaintext (legacy / fallback) */
+    isEncrypted: text("is_encrypted").default("false").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     deliveredAt: timestamp("delivered_at"),
     readAt: timestamp("read_at"),
 });
+
+// ----------- message_deletions -----------
+// Soft-delete: "delete for me" — one row per user per message/DM
+export const messageDeletions = pgTable("message_deletions", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+        .references(() => profiles.id, { onDelete: "cascade" })
+        .notNull(),
+    // Exactly one of these is set
+    messageId: uuid("message_id").references(() => messages.id, { onDelete: "cascade" }),
+    dmId: uuid("dm_id").references(() => directMessages.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+    uniqueIndex("message_deletions_user_message_uidx").on(t.userId, t.messageId),
+    uniqueIndex("message_deletions_user_dm_uidx").on(t.userId, t.dmId),
+]);
+
+// ----------- message_reads -----------
+// Group message read receipts — who has seen each message
+export const messageReads = pgTable("message_reads", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id")
+        .references(() => messages.id, { onDelete: "cascade" })
+        .notNull(),
+    userId: uuid("user_id")
+        .references(() => profiles.id, { onDelete: "cascade" })
+        .notNull(),
+    readAt: timestamp("read_at").defaultNow().notNull(),
+}, (t) => [
+    uniqueIndex("message_reads_message_user_uidx").on(t.messageId, t.userId),
+]);
 
 // ----------- relations -----------
 
@@ -94,12 +132,14 @@ export const roomMembersRelations = relations(roomMembers, ({ one }) => ({
     user: one(profiles, { fields: [roomMembers.userId], references: [profiles.id] }),
 }));
 
-export const messagesRelations = relations(messages, ({ one }) => ({
+export const messagesRelations = relations(messages, ({ one, many }) => ({
     room: one(rooms, { fields: [messages.roomId], references: [rooms.id] }),
     sender: one(profiles, { fields: [messages.senderId], references: [profiles.id] }),
+    reads: many(messageReads),
+    deletions: many(messageDeletions),
 }));
 
-export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+export const directMessagesRelations = relations(directMessages, ({ one, many }) => ({
     sender: one(profiles, {
         fields: [directMessages.senderId],
         references: [profiles.id],
@@ -110,6 +150,18 @@ export const directMessagesRelations = relations(directMessages, ({ one }) => ({
         references: [profiles.id],
         relationName: "receiver",
     }),
+    deletions: many(messageDeletions),
+}));
+
+export const messageReadsRelations = relations(messageReads, ({ one }) => ({
+    message: one(messages, { fields: [messageReads.messageId], references: [messages.id] }),
+    user: one(profiles, { fields: [messageReads.userId], references: [profiles.id] }),
+}));
+
+export const messageDeletionsRelations = relations(messageDeletions, ({ one }) => ({
+    user: one(profiles, { fields: [messageDeletions.userId], references: [profiles.id] }),
+    message: one(messages, { fields: [messageDeletions.messageId], references: [messages.id] }),
+    dm: one(directMessages, { fields: [messageDeletions.dmId], references: [directMessages.id] }),
 }));
 
 // ----------- type exports -----------
@@ -123,3 +175,5 @@ export type IMessage = typeof messages.$inferSelect;
 export type INewMessage = typeof messages.$inferInsert;
 export type IDirectMessage = typeof directMessages.$inferSelect;
 export type INewDirectMessage = typeof directMessages.$inferInsert;
+export type IMessageDeletion = typeof messageDeletions.$inferSelect;
+export type IMessageRead = typeof messageReads.$inferSelect;

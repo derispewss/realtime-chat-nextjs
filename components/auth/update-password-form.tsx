@@ -15,12 +15,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { updatePasswordSchema, IUpdatePasswordForm } from "@/types/auth";
+import type { IUpdatePasswordFormProps } from "@/types/auth";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface IUpdatePasswordFormProps {
-    lang: string;
-}
 
 export const UpdatePasswordForm = ({ lang }: IUpdatePasswordFormProps) => {
     const [error, setError] = useState<string | null>(null);
