@@ -36,7 +36,7 @@ export const GroupInfoSheet = ({
     members,
     currentUserId,
 }: IGroupInfoSheetProps) => {
-    const owner = members.find((m) => m.role === "owner");
+
 
     const formattedDate = createdAt
         ? new Intl.DateTimeFormat("en", {

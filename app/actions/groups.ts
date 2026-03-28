@@ -139,7 +139,7 @@ export const deleteGroupMessageForMe = async (roomId: string, messageId: string)
 };
 
 export const getMessageReaders = async (messageId: string) => {
-    const user = await requireAuth();
+    await requireAuth();
 
     const readers = await db.query.messageReads.findMany({
         where: eq(messageReads.messageId, messageId),
