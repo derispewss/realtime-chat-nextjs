@@ -324,7 +324,7 @@ export const MessageBubble = ({
                                     onKeyDown={handleKeyDown}
                                     rows={2}
                                     className={cn(
-                                        "min-w-[200px] resize-none border-0 bg-transparent p-0 text-sm shadow-none outline-none focus-visible:ring-0",
+                                        "min-w-50 resize-none border-0 bg-transparent p-0 text-sm shadow-none outline-none focus-visible:ring-0",
                                         isOwn
                                             ? "text-background placeholder:text-background/50"
                                             : "text-foreground",
@@ -365,7 +365,7 @@ export const MessageBubble = ({
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="whitespace-pre-wrap break-words leading-relaxed"
+                                className="whitespace-pre-wrap wrap-break-word leading-relaxed"
                             >
                                 {content}
                                 {/*
