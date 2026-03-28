@@ -43,7 +43,7 @@ next-env.d.ts
 # Agents
 .agents/
 .agent/
-supabase/
+_supabase/
 
 # Settings
 /.vscode
