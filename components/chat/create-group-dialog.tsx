@@ -13,11 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { createGroup } from "@/app/actions/groups";
+import type { ICreateGroupDialogProps } from "@/types/chat";
 
-interface ICreateGroupDialogProps {
-    lang: string;
-    trigger: React.ReactNode;
-}
 
 export const CreateGroupDialog = ({ lang, trigger }: ICreateGroupDialogProps) => {
     const [open, setOpen] = useState(false);

@@ -22,32 +22,35 @@ import {
 import {
   CheckCheckIcon,
   CheckIcon,
+  ClipboardCopy,
   HashIcon,
   LogOutIcon,
+  MessageCircle,
+  MessageSquareDashed,
   MessageSquareIcon,
   MessagesSquareIcon,
   PanelLeftIcon,
+  PlusIcon,
+  Trash2,
   UserIcon,
   UsersIcon,
 } from "lucide-react"
+import { CreateGroupDialog } from "@/components/chat/create-group-dialog"
+import { StartDMDialog } from "@/components/chat/start-dm-dialog"
+import { Button } from "@/components/ui/button"
 
+import { leaveGroup } from "@/app/actions/groups"
+import { clearDMConversation } from "@/app/actions/direct-messages"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import type { IProfile, IRoom } from "@/db/schema"
 import type { IDMPartnerWithLastMessage } from "@/db/queries/direct-messages"
-
-type TSidebarSection = "groups" | "dms"
-
-interface INavItem {
-  key: TSidebarSection
-  title: string
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
-}
-
-interface IAppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  lang: string
-  groups: IRoom[]
-  dmPartners: IDMPartnerWithLastMessage[]
-  currentUser: Pick<IProfile, "id" | "username" | "avatarUrl">
-}
+import type { TSidebarSection, INavItem, IAppSidebarProps } from "@/types/sidebar"
 
 const formatMessageTime = (value: Date) => {
   return new Intl.DateTimeFormat("en", {
@@ -263,17 +266,49 @@ export const AppSidebar = ({
         <SidebarHeader className="gap-3.5 border-b p-4">
           <div className="flex w-full items-center justify-between">
             <div className="text-base font-medium text-foreground">{activeItem.title}</div>
-            <SidebarMenuButton
-              tooltip={{
-                children: open ? "Collapse sidebar" : "Expand sidebar",
-                hidden: false,
-              }}
-              onClick={toggleSidebar}
-              aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-              className="h-8 w-8 shrink-0 justify-center p-0"
-            >
-              <PanelLeftIcon className="h-4 w-4" />
-            </SidebarMenuButton>
+            <div className="flex items-center gap-1">
+              {activeItem.key === "groups" && (
+                <CreateGroupDialog
+                  lang={lang}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="Create group"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+              {activeItem.key === "dms" && (
+                <StartDMDialog
+                  lang={lang}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      aria-label="New message"
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              )}
+              <SidebarMenuButton
+                tooltip={{
+                  children: open ? "Collapse sidebar" : "Expand sidebar",
+                  hidden: false,
+                }}
+                onClick={toggleSidebar}
+                aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+                className="h-7 w-7 shrink-0 justify-center p-0"
+              >
+                <PanelLeftIcon className="h-4 w-4" />
+              </SidebarMenuButton>
+            </div>
           </div>
           <SidebarInput
             placeholder={activeItem.key === "groups" ? "Search groups..." : "Search users..."}
@@ -285,9 +320,32 @@ export const AppSidebar = ({
           <SidebarGroup className="px-0">
             <SidebarGroupContent>
               {activeItem.key === "groups" && filteredGroups.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">
-                  {groups.length === 0 ? "No groups yet" : "No groups match your search"}
-                </p>
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                    <UsersIcon className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {groups.length === 0 ? "No groups yet" : "No results"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {groups.length === 0
+                        ? "Tap + to create your first group"
+                        : "Try a different search"}
+                    </p>
+                  </div>
+                  {groups.length === 0 && (
+                    <CreateGroupDialog
+                      lang={lang}
+                      trigger={
+                        <Button size="sm" variant="outline" className="mt-1 gap-1.5">
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          Create group
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
               )}
 
               {activeItem.key === "groups" &&
@@ -297,45 +355,99 @@ export const AppSidebar = ({
                   const isPending = pendingPathname === targetPath && pathname !== targetPath
 
                   return (
-                    <Link
-                      key={group.id}
-                      href={targetPath}
-                      prefetch
-                      onMouseEnter={() => {
-                        router.prefetch(targetPath)
-                      }}
-                      onClick={() => {
-                        setOptimisticPathname(targetPath)
-                        setPendingPathname(targetPath)
-                      }}
-                      className="flex items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    >
-                      <HashIcon className="mt-0.5 h-4 w-4 shrink-0" />
-                      <div className="grid min-w-0 gap-1">
-                        {isPending ? (
-                          <>
-                            <span className="h-3 w-24 animate-pulse rounded bg-muted" />
-                            <span className="h-3 w-32 animate-pulse rounded bg-muted" />
-                          </>
-                        ) : (
-                          <>
-                            <span className={`truncate font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                              {group.name}
-                            </span>
-                            <span className="line-clamp-2 text-xs text-muted-foreground">
-                              {group.description ?? "No description"}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </Link>
+                    <ContextMenu key={group.id}>
+                      <ContextMenuTrigger asChild>
+                        <Link
+                          href={targetPath}
+                          prefetch
+                          onMouseEnter={() => {
+                            router.prefetch(targetPath)
+                          }}
+                          onClick={() => {
+                            setOptimisticPathname(targetPath)
+                            setPendingPathname(targetPath)
+                          }}
+                          className="flex items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        >
+                          <HashIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div className="grid min-w-0 gap-1">
+                            {isPending ? (
+                              <>
+                                <span className="h-3 w-24 animate-pulse rounded bg-muted" />
+                                <span className="h-3 w-32 animate-pulse rounded bg-muted" />
+                              </>
+                            ) : (
+                              <>
+                                <span className={`truncate font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                                  {group.name}
+                                </span>
+                                <span className="line-clamp-2 text-xs text-muted-foreground">
+                                  {group.description ?? "No description"}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </Link>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-52">
+                        <ContextMenuItem onSelect={() => router.push(targetPath)}>
+                          <HashIcon className="h-4 w-4" />
+                          Open group
+                        </ContextMenuItem>
+                        <ContextMenuItem
+                          onSelect={() => {
+                            navigator.clipboard.writeText(group.name).catch(() => {})
+                          }}
+                        >
+                          <ClipboardCopy className="h-4 w-4" />
+                          Copy name
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={async () => {
+                            const isOwner = group.ownerId === currentUser.id
+                            const label = isOwner ? "delete this group" : "leave this group"
+                            if (!window.confirm(`Are you sure you want to ${label}?`)) return
+                            await leaveGroup(group.id)
+                            if (activePathname === targetPath) router.push(`/${lang}/chat`)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {group.ownerId === currentUser.id ? "Delete group" : "Leave group"}
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   )
                 })}
 
               {activeItem.key === "dms" && filteredDMPartners.length === 0 && (
-                <p className="px-4 py-3 text-sm text-muted-foreground">
-                  {dmPartners.length === 0 ? "No conversations yet" : "No users match your search"}
-                </p>
+                <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                    <MessageSquareDashed className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {dmPartners.length === 0 ? "No conversations" : "No results"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {dmPartners.length === 0
+                        ? "Tap + to start a new chat"
+                        : "Try a different search"}
+                    </p>
+                  </div>
+                  {dmPartners.length === 0 && (
+                    <StartDMDialog
+                      lang={lang}
+                      trigger={
+                        <Button size="sm" variant="outline" className="mt-1 gap-1.5">
+                          <PlusIcon className="h-3.5 w-3.5" />
+                          New message
+                        </Button>
+                      }
+                    />
+                  )}
+                </div>
               )}
 
               {activeItem.key === "dms" &&
@@ -353,75 +465,96 @@ export const AppSidebar = ({
                   const messageTime = partner.lastMessage?.createdAt
 
                   return (
-                    <Link
-                      key={partner.id}
-                      href={targetPath}
-                      prefetch
-                      onMouseEnter={() => {
-                        router.prefetch(targetPath)
-                      }}
-                      onClick={() => {
-                        setOptimisticPathname(targetPath)
-                        setPendingPathname(targetPath)
-                      }}
-                      className="flex items-start gap-3 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    >
-                      <Avatar className="h-8 w-8 shrink-0 mt-0.5">
-                        <AvatarFallback className="text-[10px]">
-                          {partner.username.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center justify-between gap-2">
-                          {isPending ? (
-                            <>
-                              <span className="h-3 w-28 animate-pulse rounded bg-muted" />
-                              <span className="h-3 w-10 animate-pulse rounded bg-muted" />
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex min-w-0 items-center gap-2">
-                                {isUnreadIncoming && (
-                                  <span className="h-2 w-2 shrink-0 rounded-full bg-foreground" aria-hidden="true" />
+                    <ContextMenu key={partner.id}>
+                      <ContextMenuTrigger asChild>
+                        <Link
+                          href={targetPath}
+                          prefetch
+                          onMouseEnter={() => {
+                            router.prefetch(targetPath)
+                          }}
+                          onClick={() => {
+                            setOptimisticPathname(targetPath)
+                            setPendingPathname(targetPath)
+                          }}
+                          className="flex items-start gap-3 border-b p-4 text-sm leading-tight last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        >
+                          <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                            <AvatarFallback className="text-[10px]">
+                              {partner.username.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              {isPending ? (
+                                <>
+                                  <span className="h-3 w-28 animate-pulse rounded bg-muted" />
+                                  <span className="h-3 w-10 animate-pulse rounded bg-muted" />
+                                </>
+                              ) : (
+                                <>
+                                  <div className="flex min-w-0 items-center gap-2">
+                                    {isUnreadIncoming && (
+                                      <span className="h-2 w-2 shrink-0 rounded-full bg-foreground" aria-hidden="true" />
+                                    )}
+                                    <span className={`truncate font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                                      {partner.username}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5">
+                                    {partner.unreadCount > 0 && (
+                                      <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold text-background">
+                                        {partner.unreadCount > 99 ? "99+" : partner.unreadCount}
+                                      </span>
+                                    )}
+                                    {messageTime && (
+                                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                                        {formatMessageTime(messageTime)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            {isPending ? (
+                              <span className="h-3 w-40 animate-pulse rounded bg-muted" />
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                {status && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                                    {status.icon}
+                                    {status.text}
+                                  </span>
                                 )}
-                                <span className={`truncate font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                                  {partner.username}
+                                <span
+                                  className={`truncate text-xs ${isUnreadIncoming ? "font-semibold text-foreground" : "text-muted-foreground"}`}
+                                >
+                                  {messagePreview}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-1.5">
-                                {partner.unreadCount > 0 && (
-                                  <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-foreground px-1.5 py-0.5 text-[10px] font-semibold text-background">
-                                    {partner.unreadCount > 99 ? "99+" : partner.unreadCount}
-                                  </span>
-                                )}
-                                {messageTime && (
-                                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                                    {formatMessageTime(messageTime)}
-                                  </span>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        {isPending ? (
-                          <span className="h-3 w-40 animate-pulse rounded bg-muted" />
-                        ) : (
-                          <div className="flex items-center gap-1.5">
-                            {status && (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                                {status.icon}
-                                {status.text}
-                              </span>
                             )}
-                            <span
-                              className={`truncate text-xs ${isUnreadIncoming ? "font-semibold text-foreground" : "text-muted-foreground"}`}
-                            >
-                              {messagePreview}
-                            </span>
                           </div>
-                        )}
-                      </div>
-                    </Link>
+                        </Link>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-52">
+                        <ContextMenuItem onSelect={() => router.push(targetPath)}>
+                          <MessageCircle className="h-4 w-4" />
+                          Open conversation
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={async () => {
+                            if (!window.confirm(`Clear all messages with ${partner.username}?`)) return
+                            await clearDMConversation(partner.id)
+                            if (activePathname === targetPath) router.push(`/${lang}/chat`)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Clear conversation
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   )
                 })}
             </SidebarGroupContent>

@@ -16,12 +16,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { resetPasswordSchema, IResetPasswordForm } from "@/types/auth";
+import type { IResetPasswordFormProps } from "@/types/auth";
 import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface IResetPasswordFormProps {
-    lang: string;
-}
 
 export const ResetPasswordForm = ({ lang }: IResetPasswordFormProps) => {
     const [error, setError] = useState<string | null>(null);

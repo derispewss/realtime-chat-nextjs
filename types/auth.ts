@@ -35,3 +35,21 @@ export type ILoginForm = z.infer<typeof loginSchema>;
 export type ISignupForm = z.infer<typeof signupSchema>;
 export type IResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 export type IUpdatePasswordForm = z.infer<typeof updatePasswordSchema>;
+
+// ---- Component Props ----
+
+export interface ILoginFormProps {
+    lang: string;
+}
+
+export interface ISignupFormProps {
+    lang: string;
+}
+
+export interface IResetPasswordFormProps {
+    lang: string;
+}
+
+export interface IUpdatePasswordFormProps {
+    lang: string;
+}

@@ -6,13 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateProfile } from "@/app/actions/profile";
+import type { IProfileFormProps } from "@/types/profile";
 
-interface IProfileFormProps {
-    lang: string;
-    initialUsername: string;
-    email: string;
-    initialAvatarUrl: string | null;
-}
 
 export const ProfileForm = ({
     lang,

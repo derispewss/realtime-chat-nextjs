@@ -7,15 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { updateProfilePassword } from "@/app/actions/profile";
+import type { IProfileSettingsPanelProps } from "@/types/profile";
 
 type TProfileTab = "account" | "security" | "notifications";
 
-interface IProfileSettingsPanelProps {
-    lang: string;
-    initialUsername: string;
-    email: string;
-    initialAvatarUrl: string | null;
-}
 
 const SOUND_KEY = "chat.notifications.sound";
 const DESKTOP_KEY = "chat.notifications.desktop";

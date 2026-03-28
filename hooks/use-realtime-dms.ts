@@ -15,6 +15,8 @@ interface IRealtimeDM {
         username: string;
         avatarUrl: string | null;
     };
+    iv?: string | null;
+    isEncrypted?: string;
 }
 
 interface IDMRealtimeRow {
@@ -25,6 +27,8 @@ interface IDMRealtimeRow {
     created_at: string;
     delivered_at: string | null;
     read_at: string | null;
+    iv?: string | null;
+    is_encrypted?: string;
 }
 
 interface IDMRealtimeOldRow {
@@ -40,6 +44,8 @@ interface IRealtimeDMSyncResponse {
         createdAt: string;
         deliveredAt: string | null;
         readAt: string | null;
+        iv?: string | null;
+        isEncrypted?: string;
         sender: {
             id: string;
             username: string;
@@ -61,6 +67,8 @@ const mapRealtimeRow = (row: IDMRealtimeRow) => {
         createdAt: new Date(row.created_at),
         deliveredAt: row.delivered_at ? new Date(row.delivered_at) : null,
         readAt: row.read_at ? new Date(row.read_at) : null,
+        iv: row.iv,
+        isEncrypted: row.is_encrypted,
     };
 };
 

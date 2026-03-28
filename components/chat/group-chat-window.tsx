@@ -1,32 +1,21 @@
 "use client";
 
 import {
-    deleteGroupMessage,
+    deleteGroupMessageForEveryone,
+    deleteGroupMessageForMe,
     editGroupMessage,
     sendGroupMessage,
 } from "@/app/actions/groups";
 import { MessageInput } from "@/components/chat/message-input";
 import { MessageList } from "@/components/chat/message-list";
+import { SeenBySheet } from "@/components/chat/seen-by-sheet";
 import { useRealtimeMessages } from "@/hooks/use-realtime-messages";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import type { IGroupChatWindowProps, IEditingMessage } from "@/types/chat";
 
-interface IMessage {
-    id: string;
-    content: string;
-    createdAt: Date;
-    sender: { id: string; username: string; avatarUrl: string | null };
-}
-
-interface IGroupChatWindowProps {
-    lang: string;
-    roomId: string;
-    currentUserId: string;
-    currentUsername: string;
-    initialMessages: IMessage[];
-}
 
 export const GroupChatWindow = ({
     lang,
@@ -36,6 +25,8 @@ export const GroupChatWindow = ({
     initialMessages,
 }: IGroupChatWindowProps) => {
     const router = useRouter();
+    const [editingMessage, setEditingMessage] = useState<IEditingMessage | null>(null);
+    const [seenByMessageId, setSeenByMessageId] = useState<string | null>(null);
     const SOUND_KEY = "chat.notifications.sound";
     const DESKTOP_KEY = "chat.notifications.desktop";
 
@@ -95,6 +86,15 @@ export const GroupChatWindow = ({
     const { typingUsers, sendTypingEvent } = useTypingIndicator(roomId, currentUserId, currentUsername);
 
     const handleSend = async (content: string) => {
+        if (editingMessage) {
+            const result = await editGroupMessage(roomId, editingMessage.id, content);
+            if (result.message) {
+                updateMessageContent(result.message.id, result.message.content);
+            }
+            setEditingMessage(null);
+            return;
+        }
+
         const result = await sendGroupMessage(roomId, content);
         if (result.message) {
             appendMessage({
@@ -110,18 +110,22 @@ export const GroupChatWindow = ({
         }
     };
 
-    const handleEdit = async (messageId: string, content: string) => {
-        const result = await editGroupMessage(roomId, messageId, content);
-        if (result.message) {
-            updateMessageContent(result.message.id, result.message.content);
-        }
+    const handleStartEdit = (messageId: string, content: string) => {
+        setEditingMessage({ id: messageId, content });
     };
 
-    const handleDelete = async (messageId: string) => {
-        const result = await deleteGroupMessage(roomId, messageId);
-        if (result.success) {
-            removeMessage(messageId);
-        }
+    const handleCancelEdit = () => {
+        setEditingMessage(null);
+    };
+
+    const handleDeleteForEveryone = async (messageId: string) => {
+        const result = await deleteGroupMessageForEveryone(roomId, messageId);
+        if (result.success) removeMessage(messageId);
+    };
+
+    const handleDeleteForMe = async (messageId: string) => {
+        await deleteGroupMessageForMe(roomId, messageId);
+        removeMessage(messageId); // hide locally immediately
     };
 
     const handleChatUser = (userId: string) => {
@@ -142,11 +146,23 @@ export const GroupChatWindow = ({
                 messages={messages}
                 currentUserId={currentUserId}
                 typingUsers={typingUsers}
-                onEditMessage={handleEdit}
-                onDeleteMessage={handleDelete}
+                editingMessageId={editingMessage?.id}
+                onStartEdit={handleStartEdit}
+                onDeleteForMe={handleDeleteForMe}
+                onDeleteForEveryone={handleDeleteForEveryone}
+                onViewSeen={(id) => setSeenByMessageId(id)}
                 onChatUser={handleChatUser}
             />
-            <MessageInput onSend={handleSend} onType={handleType} />
+            <MessageInput
+                onSend={handleSend}
+                onType={handleType}
+                editingMessage={editingMessage}
+                onCancelEdit={handleCancelEdit}
+            />
+            <SeenBySheet
+                messageId={seenByMessageId}
+                onClose={() => setSeenByMessageId(null)}
+            />
         </div>
     );
 };

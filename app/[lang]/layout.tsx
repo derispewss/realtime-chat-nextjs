@@ -5,7 +5,7 @@ import "../globals.css";
 
 import { getDictionary, hasLocale } from "./dictionaries";
 import { locales, ogLocales } from "@/lib/i18n";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Providers } from "@/components/providers";
 
 const siteName = "Realtime Chat Next.js";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
@@ -91,7 +91,7 @@ export default async function LocaleLayout(props: LayoutProps<"/[lang]">) {
         >
             <head />
             <body suppressHydrationWarning className="min-h-full flex flex-col">
-                <TooltipProvider>{children}</TooltipProvider>
+                <Providers>{children}</Providers>
             </body>
         </html>
     );

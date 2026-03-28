@@ -16,12 +16,9 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { signupSchema, ISignupForm } from "@/types/auth";
+import type { ISignupFormProps } from "@/types/auth";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
-
-interface ISignupFormProps {
-    lang: string;
-}
 
 export const SignupForm = ({ lang }: ISignupFormProps) => {
     const [error, setError] = useState<string | null>(null);
